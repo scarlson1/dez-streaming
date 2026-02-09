@@ -30,6 +30,7 @@ def create_processed_events_sink_postgres(t_env):
 #   earliest-offset: read everything that's in kafka
 #   latest-offset: process events coming in after flink starts up
 #   timestamp: process all events after timestamp
+# rec approach: use latest and use lambda (batch) to fill gap
 
 
 def create_events_source_kafka(t_env):

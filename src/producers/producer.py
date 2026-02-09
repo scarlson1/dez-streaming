@@ -2,6 +2,8 @@ import json
 import time
 from kafka import KafkaProducer
 
+# takes data and publishes to Kafka topic
+
 
 def json_serializer(data):
     return json.dumps(data).encode("utf-8")

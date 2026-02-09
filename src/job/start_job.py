@@ -35,7 +35,7 @@ def create_processed_events_sink_postgres(t_env):
 
 def create_events_source_kafka(t_env):
     table_name = "events"
-    pattern = "yyyy-MM-dd HH:mm:ss.SSS"
+    # pattern = "yyyy-MM-dd HH:mm:ss.SSS"
     source_ddl = f"""
         CREATE TABLE {table_name} (
             test_data INTEGER,

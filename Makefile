@@ -52,6 +52,9 @@ aggregation_job:
 taxi_job:
 	docker compose exec jobmanager ./bin/flink run -py /opt/src/job/taxi_job.py --pyFiles /opt/src -d
 
+session_job:
+	docker compose exec jobmanager ./bin/flink run -py /opt/src/job/session_job.py --pyFiles /opt/src -d
+
 .PHONY: stop
 ## Stops all services in Docker compose
 stop:

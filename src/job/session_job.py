@@ -9,6 +9,8 @@ from pyflink.common.watermark_strategy import WatermarkStrategy
 from pyflink.common.time import Duration
 
 
+# lpep_pickup_datetime VARCHAR,
+# lpep_dropoff_datetime VARCHAR,
 def create_events_aggregated_sink(t_env):
     table_name = "processed_taxi_events_aggregated"
     sink_ddl = f"""
@@ -17,7 +19,7 @@ def create_events_aggregated_sink(t_env):
             DOLocationID INTEGER,
             event_hour TIMESTAMP(3),
             num_hits BIGINT,
-            PRIMARY KEY (event_hour, test_data) NOT ENFORCED
+            PRIMARY KEY (event_hour, DOLocationID, PULocationID) NOT ENFORCED
         ) WITH (
             'connector' = 'jdbc',
             'url' = 'jdbc:postgresql://postgres:5432/postgres',
@@ -31,21 +33,23 @@ def create_events_aggregated_sink(t_env):
     return table_name
 
 
+# lpep_pickup_datetime VARCHAR,
+# lpep_dropoff_datetime VARCHAR,
 def create_events_source_kafka(t_env):
     table_name = "taxi_events"
     source_ddl = f"""
         CREATE TABLE {table_name} (
             PULocationID INTEGER,
             DOLocationID INTEGER,
-            dropoff_timestamp BIGINT,
-            event_watermark AS TO_TIMESTAMP_LTZ(dropoff_timestamp, 3),
+            lpep_dropoff_datetime VARCHAR,
+            event_watermark AS TO_TIMESTAMP(lpep_dropoff_datetime),
             WATERMARK for event_watermark as event_watermark - INTERVAL '5' SECOND
         ) WITH (
             'connector' = 'kafka',
             'properties.bootstrap.servers' = 'redpanda-1:29092',
             'topic' = 'green-trips',
-            'scan.startup.mode' = 'earliest-offset',
-            'properties.auto.offset.reset' = 'earliest',
+            'scan.startup.mode' = 'latest-offset',
+            'properties.auto.offset.reset' = 'latest',
             'format' = 'json'
         );
         """
@@ -66,28 +70,51 @@ def log_aggregation():
     watermark_strategy = WatermarkStrategy.for_bounded_out_of_orderness(
         Duration.of_seconds(5)
     ).with_timestamp_assigner(
+        # [puLocID, DOLocID, do_datetime, timestamp, watermark]
         # This lambda is your timestamp assigner:
         #   event -> The data record
         #   timestamp -> The previously assigned (or default) timestamp
         lambda event, timestamp: event[
-            2
-        ]  # We treat the second tuple element as the event-time (ms).
+            3
+        ]  # We treat the third tuple element as the event-time (ms).
     )
     try:
         # Create Kafka table
         source_table = create_events_source_kafka(t_env)
         aggregated_table = create_events_aggregated_sink(t_env)
 
+        # t_env.from_path(source_table).key_by(lambda e: (e[0], e[1])) \
+        #     .window(
+        #         Tumble.over(lit(5).minutes).on(col('event_watermark')).alias("w")
+        # ).group_by(
+        #     col("w"),
+        #     col("DOLocationID"),
+        #     col("PULocationID")
+        # ) \
+        #     .select(
+        #         col('w').start.alias('event_hour'),
+        #         col('PULocationID'),
+        #         col('DOLocationID'),
+        #         col('DOLocationID').count.alias('num_hits')
+        #     ) \
+        #     .execute_insert(aggregated_table).wait()
+
         t_env.execute_sql(
             f"""
         INSERT INTO {aggregated_table}
         SELECT
             window_start as event_hour,
+            DOLocationID,
+            PULocationID,
             COUNT(*) AS num_hits
         FROM TABLE(
-            TUMBLE(TABLE {source_table}, DESCRIPTOR(event_watermark), INTERVAL '5' MINUTE)
+            TUMBLE(
+                TABLE {source_table}, 
+                DESCRIPTOR(event_watermark), 
+                INTERVAL '5' MINUTE
+            )
         )
-        GROUP BY window_start, test_data;
+        GROUP BY window_start, DOLocationID, PULocationID;
         
         """
         ).wait()

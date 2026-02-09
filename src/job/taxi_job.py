@@ -19,7 +19,6 @@ def create_taxi_events_sink_postgres(t_env):
             DOLocationID INTEGER,
             trip_distance FLOAT,
             tip_amount FLOAT,
-            passenger_count INTEGER,
             dropoff_timestamp TIMESTAMP
         ) WITH (
             'connector' = 'jdbc',
@@ -68,8 +67,8 @@ def create_taxi_events_sink_postgres(t_env):
 # create source (similar to a table) for raw events from kafka
 def create_events_source_kafka(t_env):
     table_name = "taxi_events"
-    pattern = "yyyy-MM-dd HH:mm:ss"
-    # passenger_count AS COALESCE(passenger_count, 0)),
+    # pattern = "yyyy-MM-dd HH:mm:ss"
+    # passenger_count INTEGER,
     source_ddl = f"""
         CREATE TABLE {table_name} (
             lpep_pickup_datetime VARCHAR,
@@ -78,8 +77,7 @@ def create_events_source_kafka(t_env):
             DOLocationID INTEGER,
             trip_distance FLOAT,
             tip_amount FLOAT,
-            passenger_count INTEGER,
-            dropoff_timestamp AS TO_TIMESTAMP(lpep_dropoff_datetime, '{pattern}'),
+            dropoff_timestamp AS TO_TIMESTAMP(lpep_dropoff_datetime),
             WATERMARK FOR dropoff_timestamp AS dropoff_timestamp - INTERVAL '5' SECOND
         ) WITH (
             'connector' = 'kafka',
@@ -145,12 +143,17 @@ def log_processing():
             f"""
                     INSERT INTO {postgres_sink}
                     SELECT
-                        *,
-                        CAST(CASE WHEN passenger_count = '' THEN '0' ELSE passenger_count END AS INT) AS passenger_count
+                        lpep_pickup_datetime,
+                        lpep_dropoff_datetime,
+                        PULocationID,
+                        DOLocationID,
+                        trip_distance,
+                        tip_amount,
+                        dropoff_timestamp
                     FROM {source_table}
                     """
         ).wait()
-
+    # CAST(CASE WHEN passenger_count = '' THEN 0 ELSE passenger_count END AS INT) AS clean_passenger_count
     except Exception as e:
         print("Writing records from Kafka to JDBC failed:", str(e))
 

@@ -12,9 +12,7 @@ def main():
         value_serializer=lambda v: json.dumps(v).encode("utf-8"),
     )
 
-    csv_file = (
-        "data/green_tripdata_2019-10.csv"  # change to your CSV file path if needed
-    )
+    csv_file = "data/green_tripdata_2019-10.csv"
 
     topic_name = "green-trips"
     desired_columns = [

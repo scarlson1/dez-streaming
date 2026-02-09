@@ -188,57 +188,35 @@ Now we have the data in the Kafka stream. It's time to process it.
 * Use `lpep_dropoff_datetime` time as your watermark with a 5 second tolerance
 * Which pickup and drop off locations have the longest unbroken streak of taxi trips?
 
-**
+*PULocationId: 138, DOLocationID: 82*
 
 ```sql
-
+SELECT * FROM processed_taxi_events_aggregated ORDER BY num_hits DESC LIMIT 10;
 ```
+
+| PULocationID | DOLocationID | event_window | num_hits |
+|---|---|---|---|
+| 138 | 82 | 2019-10-11 17:50:00.000 | 9 |
+| 75 | 74 | 2019-10-08 08:50:00.000 | 9 |
+| 236 | 74 | 2019-10-27 17:35:00.000 | 9 |
+| 138 | 82 | 2019-10-04 16:40:00.000 | 8 |
+| 95 | 95 | 2019-10-23 20:15:00.000 | 8 |
+| 129 | 82 | 2019-10-16 18:50:00.000 | 8 |
+| 223 | 223 | 2019-10-16 20:10:00.000 | 7 |
+| 7 | 7 | 2019-10-16 18:40:00.000 | 7 |
+| 223 | 223 | 2019-10-16 19:25:00.000 | 7 |
+| 75 | 74 | 2019-10-15 09:15:00.000 | 7 |
+
+
 
 ## Submitting the solutions
 
 - Form for submitting: https://courses.datatalks.club/de-zoomcamp-2026/homework/hw6
-- Deadline: See the website
 
-
-## Learning in Public
-
-We encourage everyone to share what they learned. This is called "learning in public".
-
-Read more about the benefits [here](https://alexeyondata.substack.com/p/benefits-of-learning-in-public-and).
-
-### Example post for LinkedIn
-
-```
-🚀 Week 6 of Data Engineering Zoomcamp by @DataTalksClub complete!
-
-Just finished Module 6 - Streaming with PyFlink. Learned how to:
+---
 
 ✅ Set up Redpanda as a Kafka replacement
 ✅ Build streaming data pipelines
 ✅ Create topics and produce/consume messages
 ✅ Implement sessionization windows
 ✅ Process real-time taxi trip data
-
-Streaming data in real-time - the future of data engineering!
-
-Here's my homework solution: <LINK>
-
-Following along with this amazing free course - who else is learning data engineering?
-
-You can sign up here: https://github.com/DataTalksClub/data-engineering-zoomcamp/
-```
-
-### Example post for Twitter/X
-
-```
-🌊 Module 6 of Data Engineering Zoomcamp done!
-
-- Streaming with PyFlink
-- Redpanda & Kafka concepts
-- Sessionization windows
-- Real-time data processing
-
-My solution: <LINK>
-
-Free course by @DataTalksClub: https://github.com/DataTalksClub/data-engineering-zoomcamp/
-```

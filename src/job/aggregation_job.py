@@ -41,7 +41,7 @@ def create_events_source_kafka(t_env):
         ) WITH (
             'connector' = 'kafka',
             'properties.bootstrap.servers' = 'redpanda-1:29092',
-            'topic' = 'test-topic',
+            'topic' = 'test-topic',            
             'scan.startup.mode' = 'earliest-offset',
             'properties.auto.offset.reset' = 'earliest',
             'format' = 'json'
